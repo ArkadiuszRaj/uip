@@ -426,6 +426,24 @@
 #endif /* UIP_CONF_BROADCAST */
 
 /**
+ * IPv4 multicast reception (224.0.0.0/4) for UDP.
+ *
+ * With this enabled, UDP datagrams addressed to a multicast group are
+ * delivered to UDP connections (a connection whose remote address is a
+ * multicast group accepts datagrams from any source), and uip_arp_out()
+ * maps multicast destinations to 01:00:5E:xx:xx:xx without ARP. Needed
+ * for IEEE 1588 (224.0.1.129) and mDNS. No IGMP: the MAC has to let the
+ * group through (pass-all-multicast or a hash entry).
+ *
+ * \hideinitializer
+ */
+#ifndef UIP_CONF_MULTICAST
+#define UIP_MULTICAST 0
+#else /* UIP_CONF_MULTICAST */
+#define UIP_MULTICAST UIP_CONF_MULTICAST
+#endif /* UIP_CONF_MULTICAST */
+
+/**
  * Print out a uIP log message.
  *
  * This function must be implemented by the module that uses uIP, and

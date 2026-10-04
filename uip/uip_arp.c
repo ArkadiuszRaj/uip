@@ -365,6 +365,18 @@ uip_arp_out(void)
   /* First check if destination is a local broadcast. */
   if(uip_ipaddr_cmp(IPBUF->destipaddr, broadcast_ipaddr)) {
     memcpy(IPBUF->ethhdr.dest.addr, broadcast_ethaddr.addr, 6);
+#if UIP_MULTICAST
+  } else if((IPBUF->destipaddr[0] & HTONS(0xf000)) == HTONS(0xe000)) {
+    /* IPv4 multicast: 01:00:5E + the low 23 bits of the group address
+       (RFC 1112 6.4). Never on the local network in the netmask sense,
+       so it must be handled before the default-router fallback. */
+    IPBUF->ethhdr.dest.addr[0] = 0x01;
+    IPBUF->ethhdr.dest.addr[1] = 0x00;
+    IPBUF->ethhdr.dest.addr[2] = 0x5e;
+    IPBUF->ethhdr.dest.addr[3] = (HTONS(IPBUF->destipaddr[0]) & 0x7f);
+    IPBUF->ethhdr.dest.addr[4] = (HTONS(IPBUF->destipaddr[1]) >> 8);
+    IPBUF->ethhdr.dest.addr[5] = (HTONS(IPBUF->destipaddr[1]) & 0xff);
+#endif /* UIP_MULTICAST */
   } else {
     /* Check if the destination address is on the local network. */
     if(!uip_ipaddr_maskcmp(IPBUF->destipaddr, uip_hostaddr, uip_netmask)) {

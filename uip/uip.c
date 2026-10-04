@@ -915,6 +915,15 @@ uip_process(u8_t flag)
       goto udp_input;
     }
 #endif /* UIP_BROADCAST */
+
+#if UIP_MULTICAST && !UIP_CONF_IPV6
+    /* UDP to an IPv4 multicast group (224.0.0.0/4) is ours too; the
+       MAC-level filter decided which groups reach us. */
+    if(BUF->proto == UIP_PROTO_UDP &&
+       (BUF->destipaddr[0] & HTONS(0xf000)) == HTONS(0xe000)) {
+      goto udp_input;
+    }
+#endif /* UIP_MULTICAST && !UIP_CONF_IPV6 */
     
     /* Check if the packet is destined for our IP address. */
 #if !UIP_CONF_IPV6
@@ -1115,6 +1124,11 @@ uip_process(u8_t flag)
         UDPBUF->srcport == uip_udp_conn->rport) &&
        (uip_ipaddr_cmp(uip_udp_conn->ripaddr, all_zeroes_addr) ||
 	uip_ipaddr_cmp(uip_udp_conn->ripaddr, all_ones_addr) ||
+#if UIP_MULTICAST && !UIP_CONF_IPV6
+	/* A connection aimed at a multicast group talks to every member:
+	   the datagrams come back from the members' unicast addresses. */
+	(uip_udp_conn->ripaddr[0] & HTONS(0xf000)) == HTONS(0xe000) ||
+#endif /* UIP_MULTICAST && !UIP_CONF_IPV6 */
 	uip_ipaddr_cmp(BUF->srcipaddr, uip_udp_conn->ripaddr))) {
       goto udp_found;
     }
